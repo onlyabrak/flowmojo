@@ -196,39 +196,40 @@ export default function PhaseManager({ projectId, currentPhase, phases, tools, m
                   isCurrentPhase ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                 }`}
               >
-                <AccordionTrigger className="px-6 hover:no-underline">
-                  <div className="flex items-center gap-4 flex-1 text-left">
-                    {getStatusIcon(phase)}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge className={PHASE_COLORS[phase]}>
-                          {PHASE_LABELS[phase]}
-                        </Badge>
-                        {isCurrentPhase && (
-                          <Badge variant="outline" className="text-xs">
-                            Current
-                          </Badge>
-                        )}
-                        {status === 'completed' && phaseData?.completion_date && (
-                          <span className="text-xs text-gray-500">
-                            ✓ Completed {new Date(phaseData.completion_date).toLocaleDateString()}
-                          </span>
-                        )}
+                <div className="px-6 py-4">
+                  <div className="flex items-center gap-4">
+                    <AccordionTrigger className="flex-1 py-0 hover:no-underline">
+                      <div className="flex items-center gap-4 flex-1 text-left">
+                        {getStatusIcon(phase)}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={PHASE_COLORS[phase]}>
+                              {PHASE_LABELS[phase]}
+                            </Badge>
+                            {isCurrentPhase && (
+                              <Badge variant="outline" className="text-xs">
+                                Current
+                              </Badge>
+                            )}
+                            {status === 'completed' && phaseData?.completion_date && (
+                              <span className="text-xs text-gray-500">
+                                ✓ Completed {new Date(phaseData.completion_date).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {PHASE_DESCRIPTIONS[phase]}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600">
-                        {PHASE_DESCRIPTIONS[phase]}
-                      </p>
-                    </div>
+                    </AccordionTrigger>
 
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2">
                       {status === 'not_started' && canStartPhase(phase) && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenDialog(phase, 'start')
-                          }}
+                          onClick={() => handleOpenDialog(phase, 'start')}
                         >
                           <PlayCircle className="h-4 w-4 mr-1" />
                           Start
@@ -239,10 +240,7 @@ export default function PhaseManager({ projectId, currentPhase, phases, tools, m
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenDialog(phase, 'complete')
-                          }}
+                          onClick={() => handleOpenDialog(phase, 'complete')}
                         >
                           <CheckCircle2 className="h-4 w-4 mr-1" />
                           Complete
@@ -250,7 +248,7 @@ export default function PhaseManager({ projectId, currentPhase, phases, tools, m
                       )}
                     </div>
                   </div>
-                </AccordionTrigger>
+                </div>
 
                 <AccordionContent className="px-6 pb-4">
                   <div className="space-y-4 pt-4">
