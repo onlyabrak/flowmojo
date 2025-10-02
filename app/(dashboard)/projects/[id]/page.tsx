@@ -1,49 +1,92 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Link from 'next/link'
+import PhaseManager from '@/components/projects/phase-manager'
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const supabase = await createClient()
+export default function ProjectDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const id = params.id as string
+  const supabase = createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [loading, setLoading] = useState(true)
+  const [project, setProject] = useState<any>(null)
+  const [phases, setPhases] = useState<any[]>([])
+  const [tools, setTools] = useState<any[]>([])
+  const [metrics, setMetrics] = useState<any[]>([])
 
-  if (!user) {
-    redirect('/login')
+  useEffect(() => {
+    checkAuth()
+    loadProjectData()
+  }, [id])
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push('/login')
+    }
   }
 
-  const { data: project, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const loadProjectData = async () => {
+    setLoading(true)
+    try {
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-  if (error || !project) {
-    notFound()
+      if (projectError || !projectData) {
+        router.push('/projects')
+        return
+      }
+
+      const { data: phasesData } = await supabase
+        .from('project_phases')
+        .select('*')
+        .eq('project_id', id)
+        .order('phase')
+
+      const { data: toolsData } = await supabase
+        .from('tools')
+        .select('*')
+        .eq('project_id', id)
+        .order('created_at', { ascending: false })
+
+      const { data: metricsData } = await supabase
+        .from('metrics')
+        .select('*')
+        .eq('project_id', id)
+        .order('created_at', { ascending: false })
+
+      setProject(projectData)
+      setPhases(phasesData || [])
+      setTools(toolsData || [])
+      setMetrics(metricsData || [])
+    } catch (err) {
+      console.error('Error loading project:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const { data: phases } = await supabase
-    .from('project_phases')
-    .select('*')
-    .eq('project_id', id)
-    .order('phase')
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">Loading project...</div>
+      </div>
+    )
+  }
 
-  const { data: tools } = await supabase
-    .from('tools')
-    .select('*')
-    .eq('project_id', id)
-    .order('created_at', { ascending: false })
-
-  const { data: metrics } = await supabase
-    .from('metrics')
-    .select('*')
-    .eq('project_id', id)
-    .order('created_at', { ascending: false })
+  if (!project) {
+    return null
+  }
 
   const getPhaseColor = (phase: string) => {
     const colors: Record<string, string> = {
@@ -216,36 +259,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )
           })()}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>DMAIC Phase Progress</CardTitle>
-              <CardDescription>Track progress through each phase</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {phaseOrder.map((phaseName) => {
-                  const phaseData = phases?.find((p) => p.phase === phaseName)
-                  return (
-                    <div key={phaseName} className="flex items-center justify-between p-3 border rounded">
-                      <div className="flex items-center gap-3">
-                        <Badge className={getPhaseColor(phaseName)}>
-                          {phaseName}
-                        </Badge>
-                        <span className="capitalize text-sm text-gray-600">
-                          {phaseData?.status?.replace('_', ' ') || 'not started'}
-                        </span>
-                      </div>
-                      {phaseData?.completion_date && (
-                        <span className="text-sm text-gray-500">
-                          Completed: {new Date(phaseData.completion_date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <PhaseManager
+            projectId={id}
+            currentPhase={project.current_phase}
+            phases={phases}
+            onUpdate={loadProjectData}
+          />
         </TabsContent>
 
         {phaseOrder.map((phaseName) => (
