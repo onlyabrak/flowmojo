@@ -119,13 +119,22 @@ export default function ProjectDetailPage() {
           <h1 className="text-3xl font-bold">{project.title}</h1>
           <p className="text-gray-600">{project.description}</p>
         </div>
-        <div className="flex gap-2">
-          <Badge className={getPhaseColor(project.current_phase)}>
-            {project.current_phase}
-          </Badge>
-          <Badge className={getStatusColor(project.status)}>
-            {project.status.replace('_', ' ')}
-          </Badge>
+        <div className="flex gap-2 items-start">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Badge className={getPhaseColor(project.current_phase)}>
+                {project.current_phase}
+              </Badge>
+              <Badge className={getStatusColor(project.status)}>
+                {project.status.replace('_', ' ')}
+              </Badge>
+            </div>
+            <Link href={`/projects/${id}/settings`}>
+              <Button variant="outline" size="sm" className="w-full">
+                Settings
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
